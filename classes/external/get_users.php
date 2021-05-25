@@ -59,10 +59,11 @@ class get_users extends \external_api {
         self::validate_context($context);
         require_capability('report/customsql:definequeries', $context);
 
-        $extrafields = get_extra_user_fields($context);
+        $extrafields = \core_user\fields::get_identity_fields($context, false);
 
+        $userfieldsapi = \core_user\fields::for_userpic()->including('idnumber');
         $fields = array_merge(['u.id'], preg_split('~\s*,\s*~',
-                \user_picture::fields('u')), $extrafields);
+            $userfieldsapi->get_sql('u', false, '', 'userid', false)->selects), $extrafields);
         $withcapabilityjoin = get_with_capability_join($context, $capability, 'u.id');
         [$wherecondition, $whereparams] = users_search_sql($query, 'u', true, $extrafields);
         [$sort, $sortparams] = users_order_by_sql('u', $query, $context);
