@@ -201,16 +201,35 @@ function report_customsql_temp_cvs_name($reportid, $timestamp) {
     global $CFG;
     $path = 'admin_report_customsql/temp/'.$reportid;
     make_upload_directory($path);
-    return array($CFG->dataroot.'/'.$path.'/'.strftime('%Y%m%d-%H%M%S', $timestamp).'.csv',
-                 $timestamp);
+    $timezone = \core_date::get_user_timezone_object();
+    $calendartype = \core_calendar\type_factory::get_calendar_instance();
+    $timestamparray = $calendartype->timestamp_to_date_array($timestamp, $timezone);
+
+    return array($CFG->dataroot.'/'.$path.'/' .
+        $timestamparray['year'] .
+        sprintf("%02d", $timestamparray['mon']) .
+        sprintf("%02d", $timestamparray['mday']) . "-" .
+        sprintf("%02d", $timestamparray['hours']) .
+        sprintf("%02d", $timestamparray['minutes']) .
+        sprintf("%02d", $timestamparray['seconds']) . '.csv',
+        $timestamp);
 }
 
 function report_customsql_scheduled_cvs_name($reportid, $timestart) {
     global $CFG;
     $path = 'admin_report_customsql/'.$reportid;
     make_upload_directory($path);
-    return array($CFG->dataroot.'/'.$path.'/'.strftime('%Y%m%d-%H%M%S', $timestart).'.csv',
-                 $timestart);
+    $timezone = \core_date::get_user_timezone_object();
+    $calendartype = \core_calendar\type_factory::get_calendar_instance();
+    $timestamparray = $calendartype->timestamp_to_date_array($timestart, $timezone);
+    return array($CFG->dataroot.'/'.$path.'/' .
+        $timestamparray['year'] .
+        sprintf("%02d", $timestamparray['mon']) .
+        sprintf("%02d", $timestamparray['mday']) . "-" .
+        sprintf("%02d", $timestamparray['hours']) .
+        sprintf("%02d", $timestamparray['minutes']) .
+        sprintf("%02d", $timestamparray['seconds']) . '.csv',
+        $timestart);
 }
 
 function report_customsql_accumulating_cvs_name($reportid) {
@@ -507,6 +526,9 @@ function report_customsql_write_csv_row($handle, $data) {
     global $CFG;
     $escapeddata = array();
     foreach ($data as $value) {
+        if (!isset($value)) {
+            $value = '';
+        }
         $value = str_replace('%%WWWROOT%%', $CFG->wwwroot, $value);
         $value = str_replace('%%Q%%', '?', $value);
         $value = str_replace('%%C%%', ':', $value);
