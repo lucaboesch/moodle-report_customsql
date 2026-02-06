@@ -516,15 +516,17 @@ function report_customsql_print_reports_for($reports, $type) {
         if ($canedit) {
             $imgedit = $OUTPUT->pix_icon('t/edit', get_string('edit'));
             $imgdelete = $OUTPUT->pix_icon('t/delete', get_string('delete'));
-            echo ' '.html_writer::tag('span', get_string('availableto', 'report_customsql',
+            echo ' ' . html_writer::tag('span', get_string('availableto', 'report_customsql',
                 $capabilities[$report->capability]),
                 ['class' => 'admin_note']) . ' ' .
                 html_writer::tag('a', $imgedit, [
                     'title' => get_string('editreportx', 'report_customsql', format_string($report->displayname)),
-                    'href' => report_customsql_url('edit.php?id='.$report->id)]) . ' ' .
+                    'href' => report_customsql_url('edit.php?id=' . $report->id)]) . ' ' .
                 html_writer::tag('a', $imgdelete,
                     ['title' => get_string('deletereportx', 'report_customsql', format_string($report->displayname)),
-                    'href' => report_customsql_url('delete.php?id=' . $report->id)]);
+                'href' => report_customsql_url('delete.php?id=' . $report->id)
+                    ]
+                );
         }
         echo html_writer::end_tag('p');
         echo "\n";
@@ -548,7 +550,6 @@ function report_customsql_get_table_headers($row) {
         if (substr($colname, -9) === ' link url' && isset($colnames[substr($colname, 0, -9)])) {
             // This is a link_url column for another column. Skip.
             $linkcolumns[$key] = -1;
-
         } else if (isset($colnames[$colname . ' link url'])) {
             $colheaders[] = $colname;
             $linkcolumns[$key] = array_search($colname . ' link url', $row);
@@ -602,11 +603,10 @@ function report_customsql_display_row($row, $linkcolumns) {
  */
 function report_customsql_time_note($report, $tag) {
     if ($report->lastrun) {
-        $a = new stdClass;
+        $a = new stdClass();
         $a->lastrun = userdate($report->lastrun);
         $a->lastexecutiontime = $report->lastexecutiontime / 1000;
         $note = get_string('lastexecuted', 'report_customsql', $a);
-
     } else {
         $note = get_string('notrunyet', 'report_customsql');
     }
@@ -630,8 +630,13 @@ function report_customsql_pretify_column_names($row, $querysql) {
     foreach (get_object_vars($row) as $colname => $ignored) {
         // Databases tend to return the columns lower-cased.
         // Try to get the original case from the query.
-        if (preg_match('~SELECT.*?\s(' . preg_quote($colname, '~') . ')\b~is',
-                $querysql, $matches)) {
+        if (
+            preg_match(
+                '~SELECT.*?\s(' . preg_quote($colname, '~') . ')\b~is',
+                $querysql,
+                $matches
+            )
+        ) {
             $colname = $matches[1];
         }
 
@@ -654,9 +659,9 @@ function report_customsql_write_csv_row($handle, $data) {
         $value = str_replace('%%Q%%', '?', $value);
         $value = str_replace('%%C%%', ':', $value);
         $value = str_replace('%%S%%', ';', $value);
-        $escapeddata[] = '"'.str_replace('"', '""', $value).'"';
+        $escapeddata[] = '"' . str_replace('"', '""', $value) . '"';
     }
-    fwrite($handle, implode(',', $escapeddata)."\r\n");
+    fwrite($handle, implode(',', $escapeddata) . "\r\n");
 }
 
 /**
@@ -689,10 +694,20 @@ function report_customsql_read_csv_row($handle) {
  * @param stdClass $report The report record.
  * @return void
  */
-function report_customsql_start_csv($handle, $firstrow, $report) {
-    $colnames = report_customsql_pretify_column_names($firstrow, $report->querysql);
+function report_customsql_start_csv(
+    $handle,
+    $firstrow,
+    $report
+) {
+    $colnames = report_customsql_pretify_column_names(
+        $firstrow,
+        $report->querysql
+    );
     if ($report->singlerow) {
-        array_unshift($colnames, get_string('queryrundate', 'report_customsql'));
+        array_unshift(
+            $colnames,
+            get_string('queryrundate', 'report_customsql')
+        );
     }
     report_customsql_write_csv_row($handle, $colnames);
 }
@@ -705,15 +720,29 @@ function report_customsql_start_csv($handle, $firstrow, $report) {
  * @return array with two elements: the timestamp for hour $at today (where today
  *      is defined by $timenow) and the timestamp for hour $at yesterday.
  */
-function report_customsql_get_daily_time_starts($timenow, $at) {
+function report_customsql_get_daily_time_starts(
+    $timenow,
+    $at
+) {
     $hours = $at;
     $minutes = 0;
     $dateparts = getdate($timenow);
     return [
-        mktime((int)$hours, (int)$minutes, 0,
-                $dateparts['mon'], $dateparts['mday'], $dateparts['year']),
-        mktime((int)$hours, (int)$minutes, 0,
-                $dateparts['mon'], $dateparts['mday'] - 1, $dateparts['year']),
+        mktime(
+            (int)$hours,
+            (int)$minutes,
+            0,
+            $dateparts['mon'],
+            $dateparts['mday'],
+            $dateparts['year']
+        ),
+        mktime(
+            (int)$hours,
+            (int)$minutes,
+            0,
+            $dateparts['mon'],
+            $dateparts['mday'] - 1, $dateparts['year']
+        ),
     ];
 }
 
@@ -735,10 +764,22 @@ function report_customsql_get_week_starts($timenow) {
     $daysafterweekstart = ($dateparts['wday'] - $startofweek + 7) % 7;
 
     return [
-        mktime(0, 0, 0, $dateparts['mon'], $dateparts['mday'] - $daysafterweekstart,
-               $dateparts['year']),
-        mktime(0, 0, 0, $dateparts['mon'], $dateparts['mday'] - $daysafterweekstart - 7,
-               $dateparts['year']),
+        mktime(
+            0,
+            0,
+            0,
+            $dateparts['mon'],
+            $dateparts['mday'] - $daysafterweekstart,
+            $dateparts['year']
+        ),
+        mktime(
+            0,
+            0,
+            0,
+            $dateparts['mon'],
+            $dateparts['mday'] - $daysafterweekstart - 7,
+            $dateparts['year']
+        ),
     ];
 }
 
@@ -789,9 +830,9 @@ function report_customsql_delete_old_temp_files($upto) {
     global $CFG;
 
     $count = 0;
-    $comparison = \core_date::strftime('%Y%m%d-%H%M%S', $upto).'csv';
+    $comparison = \core_date::strftime('%Y%m%d-%H%M%S', $upto) . 'csv';
 
-    $files = glob($CFG->dataroot.'/admin_report_customsql/temp/*/*.csv');
+    $files = glob($CFG->dataroot . '/admin_report_customsql/temp/*/*.csv');
     if (empty($files)) {
         return;
     }
@@ -938,14 +979,32 @@ function report_customsql_email_subject(int $countrows, stdClass $report): strin
 
     switch ($countrows) {
         case 0:
-            return get_string('emailsubjectnodata', 'report_customsql',
-                    ['name' => report_customsql_plain_text_report_name($report), 'env' => $server]);
+            return get_string(
+                'emailsubjectnodata',
+                'report_customsql',
+                [
+                    'name' => report_customsql_plain_text_report_name($report),
+                    'env' => $server
+                ]
+            );
         case 1:
-            return get_string('emailsubject1row', 'report_customsql',
-                    ['name' => report_customsql_plain_text_report_name($report), 'env' => $server]);
+            return get_string(
+                'emailsubject1row',
+                'report_customsql',
+                [
+                    'name' => report_customsql_plain_text_report_name($report),
+                    'env' => $server
+                ]
+            );
         default:
-            return get_string('emailsubjectxrows', 'report_customsql',
-                    ['name' => report_customsql_plain_text_report_name($report), 'rows' => $countrows, 'env' => $server]);
+            return get_string(
+                'emailsubjectxrows',
+                'report_customsql',
+                [
+                    'name' => report_customsql_plain_text_report_name($report),
+                    'rows' => $countrows, 'env' => $server
+                ]
+            );
     }
 }
 
@@ -1036,11 +1095,11 @@ function report_customsql_send_email_notification($recipient, $message) {
  */
 function report_customsql_is_daily_report_ready($report, $timenow) {
     // Time when the report should run today.
-    list($runtimetoday) = report_customsql_get_daily_time_starts($timenow, $report->at);
+    [$runtimetoday] = report_customsql_get_daily_time_starts($timenow, $report->at);
 
     // Values used to check whether the report has already run today.
-    list($today) = report_customsql_get_daily_time_starts($timenow, 0);
-    list($lastrunday) = report_customsql_get_daily_time_starts($report->lastrun, 0);
+    [$today] = report_customsql_get_daily_time_starts($timenow, 0);
+    [$lastrunday] = report_customsql_get_daily_time_starts($report->lastrun, 0);
 
     if (($runtimetoday <= $timenow) && ($today > $lastrunday)) {
         return true;
@@ -1097,8 +1156,13 @@ function report_customsql_copy_csv_to_customdir($report, $timenow, $csvfilename 
  * @return string the usable version of the name.
  */
 function report_customsql_plain_text_report_name($report): string {
-    return format_string($report->displayname, true,
-            ['context' => context_system::instance()]);
+    return format_string(
+        $report->displayname,
+        true,
+        [
+            'context' => context_system::instance()
+        ]
+    );
 }
 
 /**
